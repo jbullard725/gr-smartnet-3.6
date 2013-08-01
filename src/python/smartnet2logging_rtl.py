@@ -100,9 +100,13 @@ class my_top_block(gr.top_block):
 		self.smartnet_crc = smartnet.crc(queue)
 
 		self.connect(self.rtl, self.demod)
-
+                #self.connect(self.demod, gr.file_sink(gr.sizeof_char, "fsk_dmod.dat"))
+                
 		#self.connect(self.demod, self.start_correlator, self.smartnet_sync, self.smartnet_deinterleave, self.smartnet_parity, self.smartnet_crc, self.smartnet_packetize, self.parse)
 		self.connect(self.demod, self.start_correlator, self.smartnet_deinterleave, self.smartnet_crc)
+
+                #self.connect(self.start_correlator, gr.file_sink(gr.sizeof_char, "correlator.dat"))
+                #self.connect(self.smartnet_deinterleave, gr.file_sink(gr.sizeof_char, "deinterleave.dat"))
 		
 	def tune(self, freq):
 		result = self.rtl.set_center_freq(freq)
