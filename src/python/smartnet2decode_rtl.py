@@ -7,6 +7,29 @@
 	Based on your AIS decoding software, which is in turn based on the gr-pager code and the gr-air code.
 """
 
+#define OSW_BACKGROUND_IDLE     0x02f8
+#define OSW_FIRST_CODED_PC      0x0304
+#define OSW_FIRST_NORMAL        0x0308
+#define OSW_FIRST_TY2AS1        0x0309
+#define OSW_EXTENDED_FCN        0x030b                      
+#define OSW_AFFIL_FCN           0x030d
+#define OSW_TY2_AFFILIATION     0x0310
+#define OSW_TY1_STATUS_MIN      0x0310
+#define OSW_TY2_MESSAGE         0x0311
+#define OSW_TY1_STATUS_MAX      0x0317
+#define OSW_TY1_ALERT           0x0318
+#define OSW_TY1_EMERGENCY       0x0319
+#define OSW_TY2_CALL_ALERT      0x0319
+#define OSW_FIRST_ASTRO         0x0321
+#define OSW_SYSTEM_CLOCK        0x0322
+#define OSW_SCAN_MARKER         0x032b
+#define OSW_EMERG_ANNC          0x032e
+#define OSW_AMSS_ID_MIN         0x0360
+#define OSW_AMSS_ID_MAX         0x039f
+#define OSW_CW_ID               0x03a0
+#define OSW_SYS_NETSTAT         0x03bf
+#define OSW_SYS_STATUS          0x03c0
+
 from gnuradio import gr, gru, blks2, optfir, digital
 from gnuradio import audio
 from gnuradio import eng_notation
@@ -67,8 +90,10 @@ class my_top_block(gr.top_block):
 			# TODO FIX^
 
                     print "Setting gain to %i" % options.gain
-                    self.rtl.set_gain(options.gain, 0)
-			
+                    self.rtl.set_gain(40, 0)
+                    self.rtl.set_if_gain(50,0)
+                    self.rtl.set_bb_gain(50,0)
+#self.rtl.set_gain_mode(1,0)
 
 		print "Samples per second is %i" % self.rate
 
@@ -193,6 +218,52 @@ def getfreq(chanlist, cmd):
 
 	return freq
 
+
+
+
+def commandstring(c):
+    if c == 0x0310:
+        return 'TY1_STATUS_MIN'
+    if c == 0x0310:
+        return 'TY2_AFFILIATION'
+    if c == 0x030d:
+        return 'AFFIL_FCN'
+    if c == 0x030b:
+        return 'EXTENDED_FCN'
+    if c == 0x0309:
+        return 'FIRST_TY2AS1'
+    if c == 0x0304:
+        return 'FIRST_CODED_PC'
+    if c == 0x0308:
+        return 'FIRST_NORMAL'
+    if c == 0x02f8:
+        return 'BACKGROUND_IDLE'
+    if c == 0x3c0:
+        return 'SYS_STATUS'
+    if c == 0x03bf:
+        return 'SYS_NETSTAT'
+    if c == 0x03a0:
+        return 'CW_ID'
+    if c == 0x039f:
+        return 'AMSS_ID_MAX'
+    if c == 0x0360:
+        return 'AMSS_ID_MIN'
+    if c == 0x032e:
+        return 'EMERG_ANNC'
+    if c == 0x032b:
+        return 'SCAN_MARKER'
+    if c == 0x0322:
+        return 'SYSTEM_CLOCK'
+    if c == 0x0319:
+        return 'EMERGENCY'
+    if c == 0x0318:
+        return 'ALERT'
+    if c == 0x0317:
+        return 'STATUS_MAX'
+    if c == 0x0311:
+        return 'MESSAGE'
+    return hex(c)
+
 def parsefreq(s, chanlist):
 	retfreq = None
 	[address, groupflag, command] = s.split(",")
@@ -217,8 +288,8 @@ def parse(s, shorttglist, longtglist, chanlist, elimdupes):
 	address = int(address)
 	lookupaddr = address & 0xFFF0
 	groupflag = bool(groupflag)
-
-	print "Sentence: %s Command is: %d address: %d Group: %d" % (s, command, address, groupflag)
+        
+	print "%s \t %s \t[ %d ] \t " % (hex(command), commandstring(command), address)
 	if longtglist is not None and longtglist.get(str(lookupaddr), None) is not None:
 		longname = longtglist[str(lookupaddr)] #the mask is to screen out extra status bits, which we can add in later (see the RadioReference.com wiki on SmartNet Type II)
 	else:
