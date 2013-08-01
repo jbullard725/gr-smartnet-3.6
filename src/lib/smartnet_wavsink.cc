@@ -26,7 +26,7 @@
 
 #include <smartnet_wavsink.h>
 #include <gr_io_signature.h>
-#include <gri_wavfile.h>
+#include <smartnet_wavfile.h>
 #include <stdexcept>
 #include <climits>
 #include <cstring>
@@ -140,7 +140,7 @@ smartnet_wavsink::open(const char* filename)
 		int new_nchans, new_bytes_per_sample, new_first_sample_pos;
 
 		//validate the data, be sure it's set up the same as the current block (sample rate, mono/stereo, etc) and barf if it isn't
-	  if (!gri_wavheader_parse(d_new_fp,
+	  if (!smartnet_wavheader_parse(d_new_fp,
 				   new_sample_rate,
 				   new_nchans,
 				   new_bytes_per_sample,
@@ -180,7 +180,7 @@ smartnet_wavsink::open(const char* filename)
   	}
 	 	d_updated = true;
 
-	  if (!gri_wavheader_write(d_new_fp,
+	  if (!smartnet_wavheader_write(d_new_fp,
 				   d_sample_rate,
 				   d_nchans,
 				   d_bytes_per_sample_new)) {
@@ -211,7 +211,7 @@ void smartnet_wavsink::close_wav()
 
 	//printf("Writing wav header with %f seconds of audio\n", ((float(d_sample_count)/d_sample_rate)/d_nchans)/d_bytes_per_sample);
   
-  if(!gri_wavheader_complete(d_fp, byte_count)) {
+  if(!smartnet_wavheader_complete(d_fp, byte_count)) {
 		throw std::runtime_error("Error writing wav header\n");
 	}
   
@@ -256,7 +256,7 @@ smartnet_wavsink::work (int noutput_items,
 				sample_buf_s = 0;
       }
       
-      gri_wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
+      smartnet_wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
       
       if (feof(d_fp) || ferror(d_fp)) {
 				fprintf(stderr, "[%s] file i/o error\n", __FILE__);

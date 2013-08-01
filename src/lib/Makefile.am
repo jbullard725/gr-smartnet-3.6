@@ -28,7 +28,8 @@ grinclude_HEADERS =		\
 	smartnet_crc.h	\
 	smartnet_types.h	\
 	smartnet_subchannel_framer.h \
-	smartnet_wavsink.h
+	smartnet_wavsink.h \
+	smartnet_wavfile.h
 
 ###################################
 # SWIG Python interface and library
@@ -52,7 +53,8 @@ smartnet_la_swig_sources = 	\
 	smartnet_deinterleave.cc	\
 	smartnet_crc.cc	\
 	smartnet_subchannel_framer.cc \
-	smartnet_wavsink.cc
+	smartnet_wavsink.cc \
+	smartnet_wavfile.cc
 
 # additional arguments to the SWIG command
 #howto_la_swig_args =		\
