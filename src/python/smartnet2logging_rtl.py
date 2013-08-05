@@ -35,7 +35,7 @@ class top_block_runner(_threading.Thread):
         self.tb = tb
         self.done = False
         self.start()
-
+        
     def run(self):
         self.tb.run()
         self.done = True
@@ -43,7 +43,8 @@ class top_block_runner(_threading.Thread):
 class my_top_block(gr.top_block):
 	def __init__(self, options, queue):
 		gr.top_block.__init__(self)
-
+                
+                
 		self.rtl = osmosdr.source_c( args="nchan=" + str(1) + " " + ""  )
 		self.rtl.set_sample_rate(options.rate)
 		self.rtl.set_center_freq(options.centerfreq, 0)
@@ -63,8 +64,12 @@ class my_top_block(gr.top_block):
 
 		print "Setting gain to %i" % options.gain
 		self.rtl.set_gain(options.gain, 0)
-
-		self.rate = options.rate
+                   
+                self.rtl.set_if_gain(30,0)
+                self.rtl.set_bb_gain(30,0)
+                #self.rtl.set_gain_mode(1,0)
+		
+                self.rate = options.rate
 		
 		print "Samples per second is %i" % self.rate
 
@@ -81,6 +86,14 @@ class my_top_block(gr.top_block):
 		options.syms_per_sec = self._syms_per_sec
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
+
+                #taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
+                #first_decim = 10#int(self.rate / options.syms_per_sec)
+                #self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
+
+                self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
+                                              20000, 1.0, 0.0)
+                self.mixer = gr.multiply_cc()
 
 		self.demod = fsk_demod(options)
 		#self.start_correlator = digital.correlate_access_code_bb("10101100",0) #should mark start of packet
@@ -99,10 +112,19 @@ class my_top_block(gr.top_block):
 
 		self.smartnet_crc = smartnet.crc(queue)
 
-		self.connect(self.rtl, self.demod)
-                #self.connect(self.demod, gr.file_sink(gr.sizeof_char, "fsk_dmod.dat"))
+		#self.connect(self.rtl, self.demod)
+                #self.connect(self.rtl,self.tuner, self.demod)
+                
+                self.connect(self.rtl, (self.mixer, 0))
+                self.connect(self.offset, (self.mixer, 1))                    
+                self.connect(self.mixer, self.demod)
+
+
+#self.connect(self.demod, gr.file_sink(gr.sizeof_char, "fsk_dmod.dat"))
                 
 		#self.connect(self.demod, self.start_correlator, self.smartnet_sync, self.smartnet_deinterleave, self.smartnet_parity, self.smartnet_crc, self.smartnet_packetize, self.parse)
+
+
 		self.connect(self.demod, self.start_correlator, self.smartnet_deinterleave, self.smartnet_crc)
 
                 #self.connect(self.start_correlator, gr.file_sink(gr.sizeof_char, "correlator.dat"))
@@ -138,12 +160,19 @@ def parsefreq(s, chanlist):
 	groupflag = bool(groupflag)
 
 	if chanlist is None:
-		if command < 0x2d0:
-			retfreq = getfreq(chanlist, command)
+            #if command == 0x30B and groupflag is True and lastmsg.get("command", None) == 0x308 and address & 0x2000 and address & 0x0800:
+            if command < 0x2d0  and lastmsg.get("command", None) == 0x308:
+                retfreq = getfreq(chanlist, command)
 
 	else:
 		if chanlist.get(str(command), None) is not None: #if it falls into the channel somewhere
 			retfreq = getfreq(chanlist, command)
+        
+        lastlastmsg = lastmsg
+        lastmsg["command"]=command
+        lastmsg["address"]=address
+
+
 	return [retfreq, address] # mask so the squelch opens up on the entire group
 
 
@@ -165,7 +194,7 @@ def main():
 #						help="set bandwidth of DBS RX frond end [default=%default]")
 	parser.add_option("-C", "--chanlistfile", type="string", default=None,
 						help="read in list of Motorola channel frequencies (improves accuracy of frequency decoding) [default=%default]")
-	parser.add_option("-E", "--error", type="eng_float", default=0,
+	parser.add_option("-E", "--error", type="eng_float", default=5.5,
 						help="enter an offset error to compensate for USRP clock inaccuracy")
 	parser.add_option("-m", "--monitor", type="int", default=None,
 						help="monitor a specific talkgroup")
@@ -212,13 +241,22 @@ def main():
 	audiologgers = [] #this is the list of active audio sinks.
 	rxfound = False #a flag to indicate whether or not an audio sink was found with the correct talkgroup ID; see below
 
+	global dupes
+	dupes = {0: 0}
+	global lastmsg
+	lastmsg = {"command": 0x0000, "address": 0x0000}
+	global lastlastmsg
+	lastlastmsg = lastmsg
+
 
 	try:
 		while 1:
 			if not queue.empty_p():
 				msg = queue.delete_head() # Blocking read
 				sentence = msg.to_string()
-				
+
+
+	
 				[newfreq, newaddr] = parsefreq(sentence, chanlist)
 
 				monaddr = newaddr & 0xFFF0 #last 8 bits are status flags for a given talkgroup
@@ -257,6 +295,8 @@ def main():
 
 				if newfreq is not None:
 					print "TG %i @ %f, %i active loggers" % (newaddr, newfreq, len(audiologgers))
+
+
 
 
 			else:

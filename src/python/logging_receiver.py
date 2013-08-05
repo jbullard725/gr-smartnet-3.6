@@ -75,7 +75,8 @@ class logging_receiver(gr.hier_block2):
 		self.filename = "%s/%i.wav" % (self.directory, self.talkgroup)
 		self.audiosink = smartnet.wavsink(self.filename, 1, self.audiorate, 8) #this version allows appending to existing files.
 
-		self.connect(self, self.audio_prefilter, self.squelch, self.audiodemod, self.valve, self.audiofilt, self.audiosink)
+#		self.connect(self, self.audio_prefilter, self.squelch, self.audiodemod, self.valve, self.audiofilt, self.audiosink)
+		self.connect(self, self.audio_prefilter, self.audiodemod, self.valve, self.audiofilt, self.audiosink)
 
 		self.timestamp = 0.0
 

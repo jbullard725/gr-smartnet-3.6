@@ -76,7 +76,7 @@ class my_top_block(gr.top_block):
                     self.rate = options.rate #self.rtl.get_samp_rate()
                     self.rtl.set_center_freq(options.centerfreq, 0)
                     #self.rtl.set_freq_corr(options.ppm, 0)
-                    self.rtl.set_gain_mode(1, 0)
+                    
 		
                     self.centerfreq = options.centerfreq
                     print "Tuning to: %fMHz" % (self.centerfreq - options.error)
@@ -90,10 +90,12 @@ class my_top_block(gr.top_block):
 			# TODO FIX^
 
                     print "Setting gain to %i" % options.gain
-                    self.rtl.set_gain(40, 0)
+                    #self.rtl.set_gain(options.gain, 0)
+                    self.rtl.set_gain(10, 0)
+                    
                     self.rtl.set_if_gain(50,0)
                     self.rtl.set_bb_gain(50,0)
-#self.rtl.set_gain_mode(1,0)
+                    #self.rtl.set_gain_mode(1,0)
 
 		print "Samples per second is %i" % self.rate
 
@@ -109,6 +111,14 @@ class my_top_block(gr.top_block):
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
 
+                taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
+                self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
+
+  #first_decim = 10#int(self.rate / options.syms_per_sec)
+                self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
+                                              20000, 1.0, 0.0)
+                self.mixer = gr.multiply_cc()
+
 		self.demod = fsk_demod(options)
 		self.start_correlator = gr.correlate_access_code_tag_bb("10101100",
 		                                                        0,
@@ -116,9 +126,22 @@ class my_top_block(gr.top_block):
 		self.smartnet_deinterleave = smartnet.deinterleave()
 		self.smartnet_crc = smartnet.crc(queue)
 
+                #rerate = float(self.rate / float(first_decim)) / float(7200)
+                #print "resampling factor: %f\n" % rerate
+                
+                #if rerate.is_integer():
+                #    print "using pfb decimator\n"
+                #    self.resamp = blks2.pfb_decimator_ccf(int(rerate))
+                #else:
+                #    print "using pfb resampler\n"
+                #    self.resamp = blks2.pfb_arb_resampler_ccf(1 / rerate)
+
 		if options.filename is None:
 			#self.connect(self.u, self.demod)
-			self.connect(self.rtl, self.demod)
+                    self.connect(self.rtl, (self.mixer, 0))
+                    self.connect(self.offset, (self.mixer, 1))                    
+                    self.connect(self.mixer, self.demod)
+                        #self.connect(self.rtl, self.demod)
 		else:
 			self.connect(self.fs, self.demod)
 
@@ -137,10 +160,10 @@ class my_top_block(gr.top_block):
 
 			#on a trunked network where you know you will have good signal, a carrier power squelch works well. real FM receviers use a noise squelch, where
 			#the received audio is high-passed above the cutoff and then fed to a reverse squelch. If the power is then BELOW a threshold, open the squelch.
-			self.squelch = gr.pwr_squelch_cc(options.squelch, #squelch point
-											   alpha = 0.1, #wat
-											   ramp = 10, #wat
-											   gate = False)
+			#self.squelch = gr.pwr_squelch_cc(options.squelch, #squelch point
+			#								   alpha = 0.1, #wat
+			#								   ramp = 10, #wat
+			#								   gate = False)
 
 			self.audiodemod = blks2.fm_demod_cf(self.rate/self.prefilter_decim, #rate
 							    1, #audio decimation
@@ -157,7 +180,7 @@ class my_top_block(gr.top_block):
 			self.audiosink = audio.sink (self.audiorate, "")
 #			self.audiosink = gr.wavfile_sink("test.wav", 1, self.audiorate, 8)
 
-			self.mute()
+			#self.mute()
 
 			if options.filename is None:
 				#self.connect(self.u, self.audio_prefilter)
@@ -166,7 +189,8 @@ class my_top_block(gr.top_block):
 				self.connect(self.fs, self.audio_prefilter)
 
 #			self.connect(self.audio_prefilter, self.squelch, self.audiodemod, self.audiofilt, self.audiogain, self.audioresamp, self.audiosink)
-			self.connect(self.audio_prefilter, self.squelch, self.audiodemod, self.audiofilt, self.audiogain, self.audiosink)
+#	real		self.connect(self.audio_prefilter, self.squelch, self.audiodemod, self.audiofilt, self.audiogain, self.audiosink)
+			self.connect(self.audio_prefilter, self.audiodemod, self.audiofilt, self.audiogain, self.audiosink)
 
 ###########SUBCHANNEL DECODING EXPERIMENT###########
 			#here we set up the low-pass filter for audio subchannel data decoding. gain of 10, decimation of 10.
@@ -288,8 +312,9 @@ def parse(s, shorttglist, longtglist, chanlist, elimdupes):
 	address = int(address)
 	lookupaddr = address & 0xFFF0
 	groupflag = bool(groupflag)
-        
-	print "%s \t %s \t[ %d ] \t " % (hex(command), commandstring(command), address)
+
+        if command != 0x03bf and command != 0x032b and command != 0x03c0:
+            print "%s \t %s \t[ %d ] \t " % (hex(command), commandstring(command), address)
 	if longtglist is not None and longtglist.get(str(lookupaddr), None) is not None:
 		longname = longtglist[str(lookupaddr)] #the mask is to screen out extra status bits, which we can add in later (see the RadioReference.com wiki on SmartNet Type II)
 	else:
@@ -345,7 +370,7 @@ def main():
 						help="enter an offset error to compensate for USRP clock inaccuracy")
 	parser.add_option("-u", "--audio", action="store_true", default=False,
 						help="output audio on speaker")
-	parser.add_option("-m", "--monitor", type="int", default=None,
+	parser.add_option("-m", "--monitor", type="int", default=0,
 						help="monitor a specific talkgroup")
 	parser.add_option("-v", "--volume", type="eng_float", default=0.2,
 						help="set volume gain for audio output [default=%default]")
@@ -422,11 +447,11 @@ def main():
 					if newfreq == currentoffset and newaddr != (options.monitor & 0xFFF0):
 						tb.mute()
 					if newaddr == (options.monitor & 0xFFF0): #the mask is to allow listening to all "flags" within a talkgroup: emergency, broadcast, etc.
-						tb.unmute(options.volume)
-						if newfreq is not None and newfreq != currentoffset:
-							print "Changing freq to %f" % newfreq
-							currentoffset = newfreq
-							tb.tuneoffset(newfreq, options.centerfreq)
+                                            tb.unmute(options.volume)
+                                            if newfreq is not None and newfreq != currentoffset:
+                                                print "Changing freq to %f" % newfreq
+                                                currentoffset = newfreq
+                                                tb.tuneoffset(newfreq + options.offset, options.centerfreq)
 
 			elif runner.done:
 				break
