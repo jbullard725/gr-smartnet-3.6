@@ -13,7 +13,7 @@ from gnuradio import audio
 from gnuradio import eng_notation
 #from gnuradio import uhd
 from fsk_demod import fsk_demod
-from logging_receiver import logging_receiver
+from logging_receiver_p25 import logging_receiver_p25
 from optparse import OptionParser
 from gnuradio.eng_option import eng_option
 from gnuradio import smartnet
@@ -65,8 +65,8 @@ class my_top_block(gr.top_block):
 		print "Setting gain to %i" % options.gain
 		self.rtl.set_gain(options.gain, 0)
                    
-                self.rtl.set_if_gain(30,0)
-                self.rtl.set_bb_gain(30,0)
+                self.rtl.set_if_gain(20,0)
+                self.rtl.set_bb_gain(20,0)
                 #self.rtl.set_gain_mode(1,0)
 		
                 self.rate = options.rate
@@ -160,10 +160,10 @@ def parsefreq(s, chanlist):
 	groupflag = bool(groupflag)
 
 	if chanlist is None:
+            
             #if command == 0x30B and groupflag is True and lastmsg.get("command", None) == 0x308 and address & 0x2000 and address & 0x0800:
             if command < 0x2d0  and lastmsg.get("command", None) == 0x308:
                 retfreq = getfreq(chanlist, command)
-
 	else:
 		if chanlist.get(str(command), None) is not None: #if it falls into the channel somewhere
 			retfreq = getfreq(chanlist, command)
@@ -268,26 +268,29 @@ def main():
 				rxfound = False
 
 				for rx in audiologgers:
-
+                                    if newfreq is not None:
+                                        rx.tuneoffset(newfreq, options.centerfreq)
+                                        rxfound = True
+                                    
 					#print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
 
 					#first look through the list to find out if there is a receiver assigned to this talkgroup
-					if rx.talkgroup == monaddr: #here we've got one
-						if newfreq != rx.getfreq(options.centerfreq) and newfreq is not None: #we're on a new channel, though
-							rx.tuneoffset(newfreq, options.centerfreq)
-						
-						rx.unmute() #this should be unnecessary but it does update the timestamp
-						rxfound = True
+					#if rx.talkgroup == monaddr: #here we've got one
+					#	if newfreq != rx.getfreq(options.centerfreq) and newfreq is not None: #we're on a new channel, though
+					#		rx.tuneoffset(newfreq, options.centerfreq)
+					#	
+					#	rx.unmute() #this should be unnecessary but it does update the timestamp
+					#	rxfound = True
 						#print "New transmission on TG %i, updating timestamp" % rx.talkgroup
 
-					else:
-						if rx.getfreq(options.centerfreq) == newfreq: #a different talkgroup, but a new assignment on that freq! time to mute.
-							rx.mute()
+					#else:
+					#	if rx.getfreq(options.centerfreq) == newfreq: #a different talkgroup, but a new assignment on that freq! time to mute.
+					#		rx.mute()
 
 				if rxfound is False and newfreq is not None: #no existing receiver for this talkgroup. time to create one.
 					#lock the flowgraph
 					tb.lock()
-					audiologgers.append( logging_receiver(newaddr, options) ) #create it
+					audiologgers.append( logging_receiver_p25(newaddr, options) ) #create it
 					audiologgers[-1].tuneoffset(newfreq, options.centerfreq) #tune it
 					tb.connect(tb.rtl, audiologgers[-1]) #connect to the flowgraph
 					tb.unlock()
