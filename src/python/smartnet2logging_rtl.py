@@ -268,10 +268,12 @@ def main():
 				rxfound = False
 
 				for rx in audiologgers:
-                                    if newfreq is not None:
+                                    if newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < self.rate/2:
+                                        print "Tuning: %f %f %f" % (newfreq, abs(newfreq*1e6 - options.centerfreq) , self.rate/2)
                                         rx.tuneoffset(newfreq, options.centerfreq)
                                         rxfound = True
-                                    
+                                    else:
+                                        print "Not Tuning: %f %f %f" % (newfreq, abs(newfreq*1e6 - options.centerfreq) , self.rate/2)
 					#print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
 
 					#first look through the list to find out if there is a receiver assigned to this talkgroup
@@ -287,8 +289,9 @@ def main():
 					#	if rx.getfreq(options.centerfreq) == newfreq: #a different talkgroup, but a new assignment on that freq! time to mute.
 					#		rx.mute()
 
-				if rxfound is False and newfreq is not None: #no existing receiver for this talkgroup. time to create one.
+				if rxfound is False and newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < options.rate/2: #no existing receiver for this talkgroup. time to create one.
 					#lock the flowgraph
+                                        print "Tuning: %f %f %f" % (newfreq, abs(newfreq*1e6 - options.centerfreq) , options.rate/2)
 					tb.lock()
 					audiologgers.append( logging_receiver_p25(newaddr, options) ) #create it
 					audiologgers[-1].tuneoffset(newfreq, options.centerfreq) #tune it

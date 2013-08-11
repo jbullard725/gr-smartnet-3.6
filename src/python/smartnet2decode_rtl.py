@@ -93,8 +93,8 @@ class my_top_block(gr.top_block):
                     #self.rtl.set_gain(options.gain, 0)
                     self.rtl.set_gain(10, 0)
                     
-                    self.rtl.set_if_gain(50,0)
-                    self.rtl.set_bb_gain(50,0)
+                    self.rtl.set_if_gain(20,0)
+                    self.rtl.set_bb_gain(20,0)
                     #self.rtl.set_gain_mode(1,0)
 
 		print "Samples per second is %i" % self.rate
@@ -111,8 +111,8 @@ class my_top_block(gr.top_block):
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
 
-                taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
-                self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
+                #taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
+                #self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
 
   #first_decim = 10#int(self.rate / options.syms_per_sec)
                 self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
