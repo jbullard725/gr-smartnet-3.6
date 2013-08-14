@@ -11,6 +11,7 @@ from gnuradio import gr, gru, blks2, optfir, digital
 from grc_gnuradio import blks2 as grc_blks2
 from gnuradio import audio
 from gnuradio import eng_notation
+#from gnuradio import uhd
 from fsk_demod import fsk_demod
 from logging_receiver_dsd import logging_receiver
 from optparse import OptionParser
@@ -88,6 +89,9 @@ class my_top_block(gr.top_block):
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
 
+                #taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
+                #first_decim = 10#int(self.rate / options.syms_per_sec)
+                #self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
 
                 self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
                                               options.offset, 1.0, 0.0)
@@ -106,7 +110,13 @@ class my_top_block(gr.top_block):
 
 
 
+		#self.smartnet_sync = smartnet.sync()
 		self.smartnet_deinterleave = smartnet.deinterleave()
+		#self.smartnet_parity = smartnet.parity()
+		#self.smartnet_crc = smartnet.crc()
+		#self.smartnet_packetize = smartnet.packetize()
+		#self.parse = smartnet.parse(queue) #packet-based. this simply posts lightly-formatted messages to the queue.
+
 		self.smartnet_crc = smartnet.crc(queue)
 
 		
@@ -114,7 +124,16 @@ class my_top_block(gr.top_block):
                 self.connect(self.offset, (self.mixer, 1))                    
                 self.connect(self.mixer, self.demod)
 
+
+#self.connect(self.demod, gr.file_sink(gr.sizeof_char, "fsk_dmod.dat"))
+                
+		#self.connect(self.demod, self.start_correlator, self.smartnet_sync, self.smartnet_deinterleave, self.smartnet_parity, self.smartnet_crc, self.smartnet_packetize, self.parse)
+
+
 		self.connect(self.demod, self.start_correlator, self.smartnet_deinterleave, self.smartnet_crc)
+
+                #self.connect(self.start_correlator, gr.file_sink(gr.sizeof_char, "correlator.dat"))
+                #self.connect(self.smartnet_deinterleave, gr.file_sink(gr.sizeof_char, "deinterleave.dat"))
 		
 	def tune(self, freq):
 		result = self.rtl.set_center_freq(freq)
@@ -145,7 +164,6 @@ def parsefreq(s, chanlist):
 	address = int(address) & 0xFFF0
 	groupflag = bool(groupflag)
 
-	print "Command: %s " % (hex(command))
 	if chanlist is None:
             
             #if command == 0x30B and groupflag is True and lastmsg.get("command", None) == 0x308 and address & 0x2000 and address & 0x0800:
@@ -259,11 +277,13 @@ def main():
 				rxfound = False
 
 				for rx in audiologgers:
-                                    if newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < options.rate/2:
+                                    if newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < self.rate/2:
+                                        print "Tuning: %f %f %f" % (newfreq, abs(newfreq*1e6 - options.centerfreq) , self.rate/2)
                                         rx.tuneoffset(newfreq, options.centerfreq)
                                         rxfound = True
-                                    
-					print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
+                                    else:
+                                        print "Not Tuning: %f %f %f" % (newfreq, abs(newfreq*1e6 - options.centerfreq) , self.rate/2)
+					#print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
 
 					#first look through the list to find out if there is a receiver assigned to this talkgroup
 					if rx.talkgroup == monaddr: #here we've got one
@@ -281,14 +301,10 @@ def main():
 				if rxfound is False and newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < options.rate/2: #no existing receiver for this talkgroup. time to create one.
 					#lock the flowgraph
 					tb.lock()
-					print "Creating Logging Rec"
-					audiologgers.append( logging_receiver(newaddr, options) ) #create it
-					print "Tuning log recv"
+					audiologgers.append( logging_receiver_p25(newaddr, options) ) #create it
 					audiologgers[-1].tuneoffset(newfreq, options.centerfreq) #tune it
-					print "Connecting log recv"
 					tb.connect(tb.rtl, audiologgers[-1]) #connect to the flowgraph
 					tb.unlock()
-					print "Unmuting"
 					audiologgers[-1].unmute() #unmute it
 
 				if newfreq is not None:
