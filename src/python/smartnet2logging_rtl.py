@@ -11,14 +11,12 @@ from gnuradio import gr, gru, blks2, optfir, digital
 from grc_gnuradio import blks2 as grc_blks2
 from gnuradio import audio
 from gnuradio import eng_notation
-#from gnuradio import uhd
 from fsk_demod import fsk_demod
-from logging_receiver_p25 import logging_receiver_p25
+from logging_receiver_dsd import logging_receiver
 from optparse import OptionParser
 from gnuradio.eng_option import eng_option
 from gnuradio import smartnet
-#from gnuradio.wxgui import slider
-#from gnuradio.wxgui import stdgui2, fftsink2, form
+
 import osmosdr
 from gnuradio import digital
 
@@ -56,18 +54,21 @@ class my_top_block(gr.top_block):
 		if not(self.tune(options.centerfreq - options.error)):
 			print "Failed to set initial frequency"
 
-		if options.gain is None: #set to halfway
-#			g = self.u.get_gain_range()
-#			options.gain = (g.start()+g.stop()) / 2.0
+		if options.gain is None: 
 			options.gain = 10
-			# TODO FIX^
+		if options.bbgain is None: 
+			options.bbgain = 25
+		if options.ifgain is None: 
+			options.ifgain = 25
 
-		print "Setting gain to %i" % options.gain
-		self.rtl.set_gain(options.gain, 0)
-                   
-                self.rtl.set_if_gain(20,0)
-                self.rtl.set_bb_gain(20,0)
-                #self.rtl.set_gain_mode(1,0)
+
+		print "Setting RF gain to %i" % options.gain
+		print "Setting BB gain to %i" % options.bbgain
+		print "Setting IF gain to %i" % options.ifgain
+
+		self.rtl.set_gain(options.gain, 0) 
+		self.rtl.set_if_gain(options.ifgain,0)
+		self.rtl.set_bb_gain(options.bbgain,0)
 		
                 self.rate = options.rate
 		
@@ -87,48 +88,33 @@ class my_top_block(gr.top_block):
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
 
-                #taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
-                #first_decim = 10#int(self.rate / options.syms_per_sec)
-                #self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
 
                 self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
-                                              20000, 1.0, 0.0)
+                                              options.offset, 1.0, 0.0)
+		
+		# for some reason using the xlating filter to do the offset makes thing barf with the HackRF, Multiply CC seems to work
+
+		options.offset = 0
+
                 self.mixer = gr.multiply_cc()
 
 		self.demod = fsk_demod(options)
-		#self.start_correlator = digital.correlate_access_code_bb("10101100",0) #should mark start of packet
+
 		self.start_correlator = gr.correlate_access_code_tag_bb("10101100",
                                                             0,
                                                             "smartnet_preamble") #should mark start of packet
 
 
 
-		#self.smartnet_sync = smartnet.sync()
 		self.smartnet_deinterleave = smartnet.deinterleave()
-		#self.smartnet_parity = smartnet.parity()
-		#self.smartnet_crc = smartnet.crc()
-		#self.smartnet_packetize = smartnet.packetize()
-		#self.parse = smartnet.parse(queue) #packet-based. this simply posts lightly-formatted messages to the queue.
-
 		self.smartnet_crc = smartnet.crc(queue)
 
-		#self.connect(self.rtl, self.demod)
-                #self.connect(self.rtl,self.tuner, self.demod)
-                
+		
                 self.connect(self.rtl, (self.mixer, 0))
                 self.connect(self.offset, (self.mixer, 1))                    
                 self.connect(self.mixer, self.demod)
 
-
-#self.connect(self.demod, gr.file_sink(gr.sizeof_char, "fsk_dmod.dat"))
-                
-		#self.connect(self.demod, self.start_correlator, self.smartnet_sync, self.smartnet_deinterleave, self.smartnet_parity, self.smartnet_crc, self.smartnet_packetize, self.parse)
-
-
 		self.connect(self.demod, self.start_correlator, self.smartnet_deinterleave, self.smartnet_crc)
-
-                #self.connect(self.start_correlator, gr.file_sink(gr.sizeof_char, "correlator.dat"))
-                #self.connect(self.smartnet_deinterleave, gr.file_sink(gr.sizeof_char, "deinterleave.dat"))
 		
 	def tune(self, freq):
 		result = self.rtl.set_center_freq(freq)
@@ -159,6 +145,7 @@ def parsefreq(s, chanlist):
 	address = int(address) & 0xFFF0
 	groupflag = bool(groupflag)
 
+	print "Command: %s " % (hex(command))
 	if chanlist is None:
             
             #if command == 0x30B and groupflag is True and lastmsg.get("command", None) == 0x308 and address & 0x2000 and address & 0x0800:
@@ -188,6 +175,10 @@ def main():
 						help="set center receive frequency to MHz [default=%default]. Set to center of 800MHz band for best results")
 	parser.add_option("-g", "--gain", type="int", default=None,
 						help="set RF gain", metavar="dB")
+	parser.add_option("-i", "--ifgain", type="int", default=None,
+						help="set IF gain", metavar="dB")
+	parser.add_option("-b", "--bbgain", type="int", default=None,
+						help="set BB gain", metavar="dB")
 	parser.add_option("-r", "--rate", type="eng_float", default=64e6/18,
 						help="set sample rate [default=%default]")
 #	parser.add_option("-b", "--bandwidth", type="eng_float", default=3e6,
@@ -268,32 +259,36 @@ def main():
 				rxfound = False
 
 				for rx in audiologgers:
-                                    if newfreq is not None:
+                                    if newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < options.rate/2:
                                         rx.tuneoffset(newfreq, options.centerfreq)
                                         rxfound = True
                                     
-					#print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
+					print "Logger info: %i @ %f idle for %fs" % (rx.talkgroup, rx.getfreq(options.centerfreq), rx.timeout()) #TODO: debug
 
 					#first look through the list to find out if there is a receiver assigned to this talkgroup
-					#if rx.talkgroup == monaddr: #here we've got one
-					#	if newfreq != rx.getfreq(options.centerfreq) and newfreq is not None: #we're on a new channel, though
-					#		rx.tuneoffset(newfreq, options.centerfreq)
-					#	
-					#	rx.unmute() #this should be unnecessary but it does update the timestamp
-					#	rxfound = True
-						#print "New transmission on TG %i, updating timestamp" % rx.talkgroup
+					if rx.talkgroup == monaddr: #here we've got one
+						if newfreq != rx.getfreq(options.centerfreq) and newfreq is not None: #we're on a new channel, though
+							rx.tuneoffset(newfreq, options.centerfreq)
+						
+						rx.unmute() #this should be unnecessary but it does update the timestamp
+						rxfound = True
+						print "New transmission on TG %i, updating timestamp" % rx.talkgroup
 
-					#else:
-					#	if rx.getfreq(options.centerfreq) == newfreq: #a different talkgroup, but a new assignment on that freq! time to mute.
-					#		rx.mute()
+					else:
+						if rx.getfreq(options.centerfreq) == newfreq: #a different talkgroup, but a new assignment on that freq! time to mute.
+							rx.mute()
 
-				if rxfound is False and newfreq is not None: #no existing receiver for this talkgroup. time to create one.
+				if rxfound is False and newfreq is not None and abs(newfreq*1e6 - options.centerfreq) < options.rate/2: #no existing receiver for this talkgroup. time to create one.
 					#lock the flowgraph
 					tb.lock()
-					audiologgers.append( logging_receiver_p25(newaddr, options) ) #create it
+					print "Creating Logging Rec"
+					audiologgers.append( logging_receiver(newaddr, options) ) #create it
+					print "Tuning log recv"
 					audiologgers[-1].tuneoffset(newfreq, options.centerfreq) #tune it
+					print "Connecting log recv"
 					tb.connect(tb.rtl, audiologgers[-1]) #connect to the flowgraph
 					tb.unlock()
+					print "Unmuting"
 					audiologgers[-1].unmute() #unmute it
 
 				if newfreq is not None:
@@ -317,9 +312,9 @@ def main():
 		#perform cleanup: time to get out of Dodge
 		for rx in audiologgers: #you probably don't need to lock, disconnect, unlock, remove. but you might as well.
 			rx.close()
-			#tb.lock()
-			#tb.disconnect(rx)
-			#tb.unlock()
+			tb.lock()
+			tb.disconnect(rx)
+			tb.unlock()
 			audiologgers.remove(rx)
 
 		tb.stop()

@@ -83,18 +83,21 @@ class my_top_block(gr.top_block):
                     if not(self.tune(options.centerfreq - options.error)):
 			print "Failed to set initial frequency"
 
-                    if options.gain is None: #set to halfway
-#			g = self.u.get_gain_range()
-#			options.gain = (g.start()+g.stop()) / 2.0
+                    if options.gain is None: 
 			options.gain = 10
-			# TODO FIX^
+                    if options.bbgain is None: 
+			options.bbgain = 25
+                    if options.ifgain is None: 
+			options.ifgain = 25
 
-                    print "Setting gain to %i" % options.gain
-                    #self.rtl.set_gain(options.gain, 0)
-                    self.rtl.set_gain(10, 0)
-                    
-                    self.rtl.set_if_gain(50,0)
-                    self.rtl.set_bb_gain(50,0)
+
+                    print "Setting RF gain to %i" % options.gain
+                    print "Setting BB gain to %i" % options.bbgain
+                    print "Setting IF gain to %i" % options.ifgain
+
+                    self.rtl.set_gain(options.gain, 0) 
+                    self.rtl.set_if_gain(options.ifgain,0)
+                    self.rtl.set_bb_gain(options.bbgain,0)
                     #self.rtl.set_gain_mode(1,0)
 
 		print "Samples per second is %i" % self.rate
@@ -111,12 +114,13 @@ class my_top_block(gr.top_block):
 		options.offset = options.centerfreq - options.freq
 		print "Control channel offset: %f" % options.offset
 
-                taps = gr.firdes.low_pass(1.0, self.rate, 6000, 5000, gr.firdes.WIN_HANN)
-                self.tuner = gr.freq_xlating_fir_filter_ccf(1, taps,20000, self.rate)
-
-  #first_decim = 10#int(self.rate / options.syms_per_sec)
                 self.offset = gr.sig_source_c(self.rate, gr.GR_SIN_WAVE,
-                                              20000, 1.0, 0.0)
+                                              options.offset, 1.0, 0.0)
+		
+		# for some reason using the xlating filter to do the offset makes thing barf with the HackRF, Multiply CC seems to work
+
+		options.offset = 0
+
                 self.mixer = gr.multiply_cc()
 
 		self.demod = fsk_demod(options)
@@ -141,7 +145,7 @@ class my_top_block(gr.top_block):
                     self.connect(self.rtl, (self.mixer, 0))
                     self.connect(self.offset, (self.mixer, 1))                    
                     self.connect(self.mixer, self.demod)
-                        #self.connect(self.rtl, self.demod)
+                    #    self.connect(self.rtl, self.demod)
 		else:
 			self.connect(self.fs, self.demod)
 
@@ -356,8 +360,10 @@ def main():
 						help="set center receive frequency to MHz [default=%default]. Set to center of 800MHz band for best results")
 	parser.add_option("-g", "--gain", type="int", default=None,
 						help="set RF gain", metavar="dB")
-	parser.add_option("-b", "--bandwidth", type="eng_float", default=3e6,
-						help="set bandwidth of DBS RX frond end [default=%default]")
+	parser.add_option("-i", "--ifgain", type="int", default=None,
+						help="set IF gain", metavar="dB")
+	parser.add_option("-b", "--bbgain", type="int", default=None,
+						help="set BB gain", metavar="dB")
 	parser.add_option("-F", "--filename", type="string", default=None,
 						help="read data from filename rather than USRP")
 	parser.add_option("-t", "--tgfile", type="string", default="sf_talkgroups.csv",
