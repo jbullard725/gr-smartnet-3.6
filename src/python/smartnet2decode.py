@@ -338,7 +338,6 @@ def main():
 			if not queue.empty_p():
 				msg = queue.delete_head() # Blocking read
 				sentence = msg.to_string()
-                                print "Sentence: " % (sentence)
 				s = parse(sentence, shorttglist, longtglist, chanlist, options.allowdupes)
 				if s is not None: 
 					print s

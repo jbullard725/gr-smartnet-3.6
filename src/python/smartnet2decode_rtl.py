@@ -145,7 +145,7 @@ class my_top_block(gr.top_block):
                     self.connect(self.rtl, (self.mixer, 0))
                     self.connect(self.offset, (self.mixer, 1))                    
                     self.connect(self.mixer, self.demod)
-                        #self.connect(self.rtl, self.demod)
+                    #    self.connect(self.rtl, self.demod)
 		else:
 			self.connect(self.fs, self.demod)
 
@@ -360,8 +360,10 @@ def main():
 						help="set center receive frequency to MHz [default=%default]. Set to center of 800MHz band for best results")
 	parser.add_option("-g", "--gain", type="int", default=None,
 						help="set RF gain", metavar="dB")
-	parser.add_option("-b", "--bandwidth", type="eng_float", default=3e6,
-						help="set bandwidth of DBS RX frond end [default=%default]")
+	parser.add_option("-i", "--ifgain", type="int", default=None,
+						help="set IF gain", metavar="dB")
+	parser.add_option("-b", "--bbgain", type="int", default=None,
+						help="set BB gain", metavar="dB")
 	parser.add_option("-F", "--filename", type="string", default=None,
 						help="read data from filename rather than USRP")
 	parser.add_option("-t", "--tgfile", type="string", default="sf_talkgroups.csv",
