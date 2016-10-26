@@ -1,1 +1,16 @@
 /.project
+/autom4te.cache/
+/aclocal.m4
+/INSTALL
+/Makefile.in
+/compile
+/config.guess
+/config.log
+/config.sub
+/configure
+/depcomp
+/install-sh
+/ltmain.sh
+/missing
+/py-compile
+/test-driver
