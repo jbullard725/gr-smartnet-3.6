@@ -31,8 +31,8 @@
 #endif
 
 #include <smartnet_parity.h>
-#include <gr_io_signature.h>
-#include <gr_tags.h>
+#include <gnuradio/io_signature.h>
+#include <gnuradio/tags.h>
 
 #define VERBOSE 1
 

@@ -31,18 +31,17 @@ AM_CPPFLAGS = \
 	$(CPPUNIT_INCLUDES) \
 	$(GNURADIO_RUNTIME_CPPFLAGS)
 
+# these are used by both SWIG and CXX
+STD_DEFINES_AND_INCLUDES = \
+	$(DEFINES) \
+	-I$(GNURADIO_RUNTIME_INCLUDEDIR) \
+	-I$(GNURADIO_RUNTIME_INCLUDEDIR)/gnuradio/swig
+	
 # includes
 grincludedir = $(includedir)/gnuradio
 
 # swig includes 
 swigincludedir = $(grincludedir)/swig
-
-# these are used by both SWIG and CXX
-STD_DEFINES_AND_INCLUDES = \
-	$(DEFINES) \
-	-I$(GNURADIO_RUNTIME_INCLUDEDIR) \
-	-I$(grincludedir) \
-	-I$(swigincludedir)
 
 # Install this stuff in the appropriate subdirectory
 # This usually ends up at:

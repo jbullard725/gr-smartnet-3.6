@@ -25,14 +25,14 @@
 #endif
 
 #include <smartnet_wavsink.h>
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 #include <smartnet_wavfile.h>
 #include <stdexcept>
 #include <climits>
 #include <cstring>
 #include <cmath>
 #include <fcntl.h>
-#include <gruel/thread.h>
+#include <thread/thread.h>
 #include <sys/stat.h>
 
 // win32 (mingw/msvc) specific

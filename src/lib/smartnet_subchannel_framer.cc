@@ -30,8 +30,8 @@
 #include "config.h"
 #endif
 
-#include "smartnet_subchannel_framer.h"
-#include <gr_io_signature.h>
+#include <smartnet_subchannel_framer.h>
+#include <gnuradio/io_signature.h>
 #include <sstream>
 #include <stdio.h>
 

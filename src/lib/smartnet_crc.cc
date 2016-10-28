@@ -25,10 +25,10 @@
 #include "config.h"
 #endif
 
-#include "smartnet_crc.h"
-#include <gr_io_signature.h>
+#include <smartnet_crc.h>
+#include <gnuradio/io_signature.h>
 #include <stdio.h>
-#include <gr_tags.h>
+#include <gnuradio/tags.h>
 #include <sstream>
 #include <smartnet_types.h>
 

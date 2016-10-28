@@ -23,7 +23,7 @@
 #ifndef smartnet_parity_H
 #define smartnet_parity_H
 
-#include <gr_block.h>
+#include <gnuradio/block.h>
 
 class smartnet_parity;
 

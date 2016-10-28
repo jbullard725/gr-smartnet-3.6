@@ -25,12 +25,12 @@
 
 #include <smartnet_parse.h>
 #include <smartnet_types.h>
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 #include <ctype.h>
 #include <iostream>
 #include <ostream>
 #include <iomanip>
-#include <gr_msg_queue.h>
+#include <gnuradio/msg_queue.h>
 
 smartnet_parse_sptr smartnet_make_parse(gr_msg_queue_sptr queue)
 {

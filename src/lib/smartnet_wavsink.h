@@ -1,19 +1,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2008,2009 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -23,8 +23,8 @@
 #ifndef INCLUDED_smartnet_wavsink_H
 #define INCLUDED_smartnet_wavsink_H
 
-#include <gr_sync_block.h>
-#include <gr_file_sink_base.h>
+#include <gnuradio/sync_block.h>
+#include <gnuradio/blocks/file_sink_base.h>
 #include <boost/thread.hpp>
 
 class smartnet_wavsink;
@@ -80,7 +80,7 @@ private:
   bool d_updated;
 	bool d_new_append;
   boost::mutex d_mutex;
-  
+
   /*!
    * \brief Convert a sample value within [-1;+1] to a corresponding
    *  short integer value
@@ -115,14 +115,14 @@ public:
    * hand.
    */
   void do_update();
-  
+
   /*!
    * \brief Set the sample rate. This will not affect the WAV file
    * currently opened. Any following open() calls will use this new
    * sample rate.
    */
   void set_sample_rate(unsigned int sample_rate);
-  
+
   /*!
    * \brief Set bits per sample. This will not affect the WAV file
    * currently opened (see set_sample_rate()). If the value is neither
@@ -131,18 +131,18 @@ public:
   void set_bits_per_sample(int bits_per_sample);
 
 	//returns the current time offset of the .wav file, for timestamp purposes
-	float get_time(void) { 
-		if(d_fp) { 
+	float get_time(void) {
+		if(d_fp) {
 			return (float(d_sample_count)/d_sample_rate)/d_nchans;
 		} else if(d_new_fp && d_new_append) {
 			return float(d_new_samples_per_chan)/d_sample_rate;
 		} else return 0;
   }
-  
+
   int work(int noutput_items,
 	   gr_vector_const_void_star &input_items,
 	   gr_vector_void_star &output_items);
-  
+
 };
 
 #endif /* INCLUDED_smartnet_wavsink_H */

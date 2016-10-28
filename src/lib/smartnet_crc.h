@@ -23,8 +23,8 @@
 #ifndef smartnet_crc_H
 #define smartnet_crc_H
 
-#include <gr_sync_block.h>
-#include <gr_msg_queue.h>
+#include <gnuradio/sync_block.h>
+#include <gnuradio/msg_queue.h>
 
 class smartnet_crc;
 

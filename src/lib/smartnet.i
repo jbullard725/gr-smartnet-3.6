@@ -91,7 +91,7 @@ protected:
 		  int n_channels,
 		  unsigned int sample_rate,
 		  int bits_per_sample) throw (std::runtime_error);
-  
+
 public:
   ~smartnet_wavsink ();
   bool open(const char* filename);

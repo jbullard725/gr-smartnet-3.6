@@ -23,8 +23,8 @@
 #define INCLUDED_SMARTNET_PARSE_H
 //#define OMNITHREAD_POSIX
 
-#include <gr_sync_block.h>
-#include <gr_msg_queue.h>
+#include <gnuradio/sync_block.h>
+#include <gnuradio/msg_queue.h>
 //#include "smartnet_types.h"
 //#include <pageri_flex_modes.h>
 #include <sstream>

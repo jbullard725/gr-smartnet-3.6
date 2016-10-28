@@ -30,7 +30,7 @@ index 0000000..a782390
 +#include "config.h"
 +#endif
 +
-+#include <smartnet_wavfile.h>
++#include "smartnet_wavfile.h"
 +#include <cstring>
 +#include <stdint.h>
 +
@@ -433,7 +433,7 @@ index bc75e0c..d795fdf 100644
  #include <smartnet_wavsink.h>
  #include <gr_io_signature.h>
 -#include <gri_wavfile.h>
-+#include <smartnet_wavfile.h>
++#include "smartnet_wavfile.h"
  #include <stdexcept>
  #include <climits>
  #include <cstring>

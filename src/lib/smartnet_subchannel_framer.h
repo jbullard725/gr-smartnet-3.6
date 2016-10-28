@@ -23,7 +23,7 @@
 #ifndef smartnet_subchannel_framer_H
 #define smartnet_subchannel_framer_H
 
-#include <gr_sync_block.h>
+#include <gnuradio/sync_block.h>
 
 class smartnet_subchannel_framer;
 
