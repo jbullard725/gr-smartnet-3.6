@@ -61,8 +61,8 @@ static const int MAX_OUT = 1;   // maximum number of output streams
 
 smartnet_parity::smartnet_parity ()
   : gr::block ("parity",
-                   gr::make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
-                   gr::make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
+                   gr::io_signature::make (MIN_IN, MAX_IN, sizeof (char)),
+                   gr::io_signature::make (MIN_OUT, MAX_OUT, sizeof (char)))
 {
   set_relative_rate(0.5);
   set_output_multiple(38);

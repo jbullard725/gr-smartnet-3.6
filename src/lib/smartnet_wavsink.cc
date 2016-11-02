@@ -70,8 +70,8 @@ smartnet_wavsink::smartnet_wavsink(const char *filename,
 				 unsigned int sample_rate,
 				 int bits_per_sample)
   : gr::sync_block ("wavsink",
-		   gr::make_io_signature(1, n_channels, sizeof(float)),
-		   gr::make_io_signature(0, 0, 0)),
+		   gr::io_signature::make(1, n_channels, sizeof(float)),
+		   gr::io_signature::make(0, 0, 0)),
     d_sample_rate(sample_rate), d_nchans(n_channels),
     d_fp(0), d_new_fp(0), d_updated(false)
 {

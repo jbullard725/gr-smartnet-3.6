@@ -39,8 +39,8 @@ smartnet_parse_sptr smartnet_make_parse(gr::msg_queue::sptr queue)
 
 smartnet_parse::smartnet_parse(gr::msg_queue::sptr queue) :
     gr::sync_block("parse",
-    	gr::make_io_signature(1, 1, sizeof(struct smartnet_packet)),
-    	gr::make_io_signature(0, 0, 0)),
+    	gr::io_signature::make(1, 1, sizeof(struct smartnet_packet)),
+    	gr::io_signature::make(0, 0, 0)),
     d_queue(queue)
 {
 //	set_output_multiple(2);

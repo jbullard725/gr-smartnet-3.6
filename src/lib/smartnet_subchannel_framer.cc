@@ -63,8 +63,8 @@ static const int MAX_OUT = 1;   // maximum number of output streams
  */
 smartnet_subchannel_framer::smartnet_subchannel_framer ()
   : gr::sync_block ("subchannel_framer",
-                   gr::make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
-                   gr::make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
+                   gr::io_signature::make (MIN_IN, MAX_IN, sizeof (char)),
+                   gr::io_signature::make (MIN_OUT, MAX_OUT, sizeof (char)))
 {
   // nothing else required in this example
 	set_output_multiple(42);

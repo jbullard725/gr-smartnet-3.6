@@ -45,8 +45,8 @@ smartnet_crc_sptr smartnet_make_crc(gr::msg_queue::sptr queue)
 
 smartnet_crc::smartnet_crc (gr::msg_queue::sptr queue)
   : gr::sync_block ("crc",
-                   gr::make_io_signature (1, 1, sizeof (char)),
-                   gr::make_io_signature (0, 0, 0))
+                   gr::io_signature::make (1, 1, sizeof (char)),
+                   gr::io_signature::make (0, 0, 0))
 {
     set_output_multiple(38);
     d_queue = queue;
