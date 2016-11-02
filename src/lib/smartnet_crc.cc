@@ -2,19 +2,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2012 Nick Foster
- * 
+ *
  * This file is part of gr_smartnet
- * 
+ *
  * gr_smartnet is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * gr_smartnet is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -38,15 +38,15 @@
  * Create a new instance of smartnet_crc and return
  * a boost shared_ptr.  This is effectively the public constructor.
  */
-smartnet_crc_sptr smartnet_make_crc(gr_msg_queue_sptr queue)
+smartnet_crc_sptr smartnet_make_crc(gr::msg_queue::sptr queue)
 {
   return smartnet_crc_sptr (new smartnet_crc (queue));
 }
 
-smartnet_crc::smartnet_crc (gr_msg_queue_sptr queue)
-  : gr_sync_block ("crc",
-                   gr_make_io_signature (1, 1, sizeof (char)),
-                   gr_make_io_signature (0, 0, 0))
+smartnet_crc::smartnet_crc (gr::msg_queue::sptr queue)
+  : gr::sync_block ("crc",
+                   gr::make_io_signature (1, 1, sizeof (char)),
+                   gr::make_io_signature (0, 0, 0))
 {
     set_output_multiple(38);
     d_queue = queue;
@@ -114,14 +114,14 @@ static bool crc(const char *in) {
 
 static smartnet_packet parse(const char *in) {
     smartnet_packet pkt;
-    
+
     pkt.address = 0;
     pkt.groupflag = false;
     pkt.command = 0;
     pkt.crc = 0;
 
     int i=0;
-    
+
     for(int k = 15; k >=0 ; k--) pkt.address += (!bool(in[i++] & 0x01)) << k; //first 16 bits are ID, MSB first
     pkt.groupflag = !bool(in[i++]);
     for(int k = 9; k >=0 ; k--) pkt.command += (!bool(in[i++] & 0x01)) << k; //next 10 bits are command, MSB first
@@ -131,11 +131,11 @@ static smartnet_packet parse(const char *in) {
     //now correct things according to the mottrunk.txt description
     pkt.address ^= 0x33C7;
     pkt.command ^= 0x032A;
-    
+
     return pkt;
 }
 
-int 
+int
 smartnet_crc::work (int noutput_items,
 		    gr_vector_const_void_star &input_items,
 		    gr_vector_void_star &output_items)
@@ -148,14 +148,14 @@ smartnet_crc::work (int noutput_items,
     }
 
     uint64_t abs_sample_cnt = nitems_read(0);
-    std::vector<gr_tag_t> frame_tags;
+    std::vector<gr::tag_t> frame_tags;
 
     get_tags_in_range(frame_tags, 0, abs_sample_cnt, abs_sample_cnt + size, pmt::pmt_string_to_symbol("smartnet_frame"));
     if(frame_tags.size() == 0) {
 	return 0; //sad trombone
     }
 
-    std::vector<gr_tag_t>::iterator tag_iter;
+    std::vector<gr::tag_t>::iterator tag_iter;
     for(tag_iter = frame_tags.begin(); tag_iter != frame_tags.end(); tag_iter++) {
 	uint64_t mark = tag_iter->offset - abs_sample_cnt;
 	if(VERBOSE) std::cout << "found a frame at " << mark << std::endl;
@@ -173,7 +173,7 @@ smartnet_crc::work (int noutput_items,
 	    std::ostringstream payload;
 	    payload.str("");
 	    payload << pkt.address << "," << pkt.groupflag << "," << pkt.command;
-	    gr_message_sptr msg = gr_make_message_from_string(std::string(payload.str()));
+	    gr::message_sptr msg = gr::make_message_from_string(std::string(payload.str()));
 	    d_queue->handle(msg);
 	} else if (VERBOSE) std::cout << "CRC FAILED" << std::endl;
     }

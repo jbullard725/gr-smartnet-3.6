@@ -2,19 +2,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2004 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -30,7 +30,7 @@ class smartnet_crc;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
+ * to gr::blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
  * C++ / Python system.
@@ -48,25 +48,25 @@ typedef boost::shared_ptr<smartnet_crc> smartnet_crc_sptr;
  * constructor is private.  ais_make_invert is the public
  * interface for creating new instances.
  */
-smartnet_crc_sptr smartnet_make_crc(gr_msg_queue_sptr queue);
+smartnet_crc_sptr smartnet_make_crc(gr::msg_queue::sptr queue);
 
 /*!
  * \brief invert a packed stream of bits.
  * \ingroup block
  *
  *
- * This uses the preferred technique: subclassing gr_crc_block.
+ * This uses the preferred technique: subclassing gr::crc_block.
  */
-class smartnet_crc : public gr_sync_block
+class smartnet_crc : public gr::sync_block
 {
 private:
   // The friend declaration allows smartnet_make_crc to
   // access the private constructor.
 
-  friend smartnet_crc_sptr smartnet_make_crc(gr_msg_queue_sptr queue);
+  friend smartnet_crc_sptr smartnet_make_crc(gr::msg_queue::sptr queue);
 
-  smartnet_crc(gr_msg_queue_sptr queue);   // private constructor
-  gr_msg_queue_sptr d_queue;
+  smartnet_crc(gr::msg_queue::sptr queue);   // private constructor
+  gr::msg_queue::sptr d_queue;
 
  public:
   ~smartnet_crc();  // public destructor

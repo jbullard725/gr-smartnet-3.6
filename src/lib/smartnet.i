@@ -27,10 +27,9 @@
 %}
 
 %include "exception.i"
-%import "gnuradio.i"
+%include "gnuradio.i"
 
 %{
-#include "gnuradio_swig_bug_workaround.h"	// mandatory bug fix
 //include any user-created C headers here
 #include "smartnet_types.h"
 #include "smartnet_deinterleave.h"
@@ -44,7 +43,7 @@ GR_SWIG_BLOCK_MAGIC(smartnet,deinterleave);
 
 smartnet_deinterleave_sptr smartnet_make_deinterleave();
 
-class smartnet_deinterleave : public gr_block
+class smartnet_deinterleave : public gr::block
 {
 private:
 	smartnet_deinterleave();
@@ -54,12 +53,12 @@ public:
 
 GR_SWIG_BLOCK_MAGIC(smartnet,crc);
 
-smartnet_crc_sptr smartnet_make_crc(gr_msg_queue_sptr queue);
+smartnet_crc_sptr smartnet_make_crc(gr::msg_queue::sptr queue);
 
-class smartnet_crc : public gr_sync_block
+class smartnet_crc : public gr::sync_block
 {
 private:
-	smartnet_crc(gr_msg_queue_sptr queue);
+	smartnet_crc(gr::msg_queue::sptr queue);
 
 public:
 };
@@ -68,7 +67,7 @@ GR_SWIG_BLOCK_MAGIC(smartnet,subchannel_framer);
 
 smartnet_subchannel_framer_sptr smartnet_make_subchannel_framer();
 
-class smartnet_subchannel_framer : public gr_sync_block
+class smartnet_subchannel_framer : public gr::sync_block
 {
 private:
 	smartnet_subchannel_framer();
@@ -84,7 +83,7 @@ smartnet_make_wavsink (const char *filename,
 		      unsigned int sample_rate,
 		      int bits_per_sample = 16) throw (std::runtime_error);
 
-class smartnet_wavsink : public gr_sync_block
+class smartnet_wavsink : public gr::sync_block
 {
 protected:
   smartnet_wavsink(const char *filename,

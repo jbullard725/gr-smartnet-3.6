@@ -46,11 +46,11 @@ smartnet_make_wavsink (const char *filename,
  * \brief Read stream from a Microsoft PCM (.wav) file, output floats
  *
  * Values are within [-1;1].
- * Check gr_make_wavfile_source() for extra info.
+ * Check gr::make_wavfile_source() for extra info.
  *
  * \ingroup sink_blk
  */
-class smartnet_wavsink : public gr_sync_block
+class smartnet_wavsink : public gr::sync_block
 {
 private:
   friend smartnet_wavsink_sptr smartnet_make_wavsink (const char *filename,

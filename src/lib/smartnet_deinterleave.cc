@@ -43,7 +43,7 @@ smartnet_deinterleave_sptr smartnet_make_deinterleave()
 /*
  * Specify constraints on number of input and output streams.
  * This info is used to construct the input and output signatures
- * (2nd & 3rd args to gr_block's constructor).  The input and
+ * (2nd & 3rd args to gr::block's constructor).  The input and
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
@@ -58,9 +58,9 @@ static const int MAX_OUT = 1;   // maximum number of output streams
  * The private constructor
  */
 smartnet_deinterleave::smartnet_deinterleave ()
-  : gr_block ("deinterleave",
-                   gr_make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
-                   gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
+  : gr::block ("deinterleave",
+                   gr::make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
+                   gr::make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
 {
   set_relative_rate((double)(76.0/84.0));
   set_output_multiple(76);
@@ -103,7 +103,7 @@ smartnet_deinterleave::general_work (int noutput_items,
     }
 
     uint64_t abs_sample_cnt = nitems_read(0);
-    std::vector<gr_tag_t> preamble_tags;
+    std::vector<gr::tag_t> preamble_tags;
 
     uint64_t outlen = 0; //output sample count
 
@@ -113,7 +113,7 @@ smartnet_deinterleave::general_work (int noutput_items,
 	return 0;
     }
 
-    std::vector<gr_tag_t>::iterator tag_iter;
+    std::vector<gr::tag_t>::iterator tag_iter;
     for(tag_iter = preamble_tags.begin(); tag_iter != preamble_tags.end(); tag_iter++) {
 	uint64_t mark = tag_iter->offset - abs_sample_cnt;
 

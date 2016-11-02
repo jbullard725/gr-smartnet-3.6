@@ -36,7 +36,7 @@ STD_DEFINES_AND_INCLUDES = \
 	$(DEFINES) \
 	-I$(GNURADIO_RUNTIME_INCLUDEDIR) \
 	-I$(GNURADIO_RUNTIME_INCLUDEDIR)/gnuradio/swig
-	
+		
 # includes
 grincludedir = $(includedir)/gnuradio
 

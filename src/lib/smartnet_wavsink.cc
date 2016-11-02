@@ -69,9 +69,9 @@ smartnet_wavsink::smartnet_wavsink(const char *filename,
 				 int n_channels,
 				 unsigned int sample_rate,
 				 int bits_per_sample)
-  : gr_sync_block ("wavsink",
-		   gr_make_io_signature(1, n_channels, sizeof(float)),
-		   gr_make_io_signature(0, 0, 0)),
+  : gr::sync_block ("wavsink",
+		   gr::make_io_signature(1, n_channels, sizeof(float)),
+		   gr::make_io_signature(0, 0, 0)),
     d_sample_rate(sample_rate), d_nchans(n_channels),
     d_fp(0), d_new_fp(0), d_updated(false)
 {
@@ -80,7 +80,7 @@ smartnet_wavsink::smartnet_wavsink(const char *filename,
   }
   d_bytes_per_sample = bits_per_sample / 8;
   d_bytes_per_sample_new = d_bytes_per_sample;
-  
+
   if (!open(filename)) {
     throw std::runtime_error ("can't open file");
   }
@@ -119,7 +119,7 @@ smartnet_wavsink::open(const char* filename)
 	//open() and close() are both thread-safe public functions. they let you close and open files, so that's already in place.
 	//all we need to add is support for appending to a file rather than overwriting it.
 
-	//all right, here's the way this is gonna work. open the file just like gr_wavfile_source does...
+	//all right, here's the way this is gonna work. open the file just like gr::wavfile_source does...
 		if((fd = ::open (filename,O_RDWR|OUR_O_LARGEFILE|OUR_O_BINARY)) < 0) { //we don't use O_APPEND because we need to overwrite the header
 			perror(filename);
 			return false;
@@ -189,7 +189,7 @@ smartnet_wavsink::open(const char* filename)
 	  }
 
 	}
-  
+
   return true;
 }
 
@@ -198,10 +198,10 @@ void
 smartnet_wavsink::close()
 {
   gruel::scoped_lock guard(d_mutex);
-  
+
   if (!d_fp)
     return;
-  
+
   close_wav();
 }
 
@@ -210,11 +210,11 @@ void smartnet_wavsink::close_wav()
   unsigned int byte_count = d_sample_count * d_bytes_per_sample;
 
 	//printf("Writing wav header with %f seconds of audio\n", ((float(d_sample_count)/d_sample_rate)/d_nchans)/d_bytes_per_sample);
-  
+
   if(!smartnet_wavheader_complete(d_fp, byte_count)) {
 		throw std::runtime_error("Error writing wav header\n");
 	}
-  
+
 	fclose(d_fp);
   d_fp = NULL;
 }
@@ -237,15 +237,15 @@ smartnet_wavsink::work (int noutput_items,
 {
   float **in = (float **) &input_items[0];
   int n_in_chans = input_items.size();
-  
+
   short int sample_buf_s;
-  
+
   int nwritten;
-  
+
   do_update();	// update: d_fp is reqd
   if (!d_fp)	// drop output on the floor if there isn't a valid file open
     return noutput_items;
-  
+
   for (nwritten = 0; nwritten < noutput_items; nwritten++) {
     for (int chan = 0; chan < d_nchans; chan++) {
       // Write zeros to channels which are in the WAV file
@@ -255,9 +255,9 @@ smartnet_wavsink::work (int noutput_items,
       } else {
 				sample_buf_s = 0;
       }
-      
+
       smartnet_wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
-      
+
       if (feof(d_fp) || ferror(d_fp)) {
 				fprintf(stderr, "[%s] file i/o error\n", __FILE__);
 				close();
@@ -266,7 +266,7 @@ smartnet_wavsink::work (int noutput_items,
       d_sample_count++;
     }
   }
-  
+
   return nwritten;
 }
 
@@ -281,7 +281,7 @@ smartnet_wavsink::convert_to_short(float sample)
   } else if (sample < d_min_sample_val) {
     sample = d_min_sample_val;
   }
-  
+
   return (short int) roundf(sample);
 }
 
@@ -310,7 +310,7 @@ smartnet_wavsink::do_update()
   if (!d_updated) {
     return;
   }
-  
+
   gruel::scoped_lock guard(d_mutex);     // hold mutex for duration of this block
   if (d_fp) {
     close_wav();
@@ -336,6 +336,6 @@ smartnet_wavsink::do_update()
     d_normalize_fac  = d_max_sample_val;
     d_normalize_shift = 0;
   }
-  
+
   d_updated = false;
 }
