@@ -107,7 +107,7 @@ smartnet_wavsink::open(const char* filename)
 {
 	//this function is modified to append to .wav files instead of overwriting.
   int fd;
-  gruel::scoped_lock guard(d_mutex);
+  gr::thread::scoped_lock guard(d_mutex);
 
 	//first, check to see if the file exists.
 	int filestat = 0;
@@ -197,7 +197,7 @@ smartnet_wavsink::open(const char* filename)
 void
 smartnet_wavsink::close()
 {
-  gruel::scoped_lock guard(d_mutex);
+  gr::thread::scoped_lock guard(d_mutex);
 
   if (!d_fp)
     return;
@@ -289,7 +289,7 @@ smartnet_wavsink::convert_to_short(float sample)
 void
 smartnet_wavsink::set_bits_per_sample(int bits_per_sample)
 {
-  gruel::scoped_lock guard(d_mutex);
+  gr::thread::scoped_lock guard(d_mutex);
   if (bits_per_sample == 8 || bits_per_sample == 16) {
     d_bytes_per_sample_new = bits_per_sample / 8;
   }
@@ -299,7 +299,7 @@ smartnet_wavsink::set_bits_per_sample(int bits_per_sample)
 void
 smartnet_wavsink::set_sample_rate(unsigned int sample_rate)
 {
-  gruel::scoped_lock guard(d_mutex);
+  gr::thread::scoped_lock guard(d_mutex);
   d_sample_rate = sample_rate;
 }
 
@@ -311,7 +311,7 @@ smartnet_wavsink::do_update()
     return;
   }
 
-  gruel::scoped_lock guard(d_mutex);     // hold mutex for duration of this block
+  gr::thread::scoped_lock guard(d_mutex);     // hold mutex for duration of this block
   if (d_fp) {
     close_wav();
   }
