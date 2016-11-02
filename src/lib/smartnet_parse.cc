@@ -69,7 +69,7 @@ int smartnet_parse::work(int noutput_items,
 		d_payload.str("");
 
 		d_payload << in[i].address << "," << in[i].groupflag << "," << in[i].command;
-		gr::message_sptr msg = gr::make_message_from_string(std::string(d_payload.str()));
+		gr::message::sptr msg = gr::message::make_from_string(std::string(d_payload.str()));
 		d_queue->handle(msg);
 
 		i++;

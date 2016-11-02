@@ -32,7 +32,7 @@
 #include <cstring>
 #include <cmath>
 #include <fcntl.h>
-#include <thread/thread.h>
+#include <gnuradio/thread/thread.h>
 #include <sys/stat.h>
 
 // win32 (mingw/msvc) specific

@@ -150,7 +150,7 @@ smartnet_crc::work (int noutput_items,
     uint64_t abs_sample_cnt = nitems_read(0);
     std::vector<gr::tag_t> frame_tags;
 
-    get_tags_in_range(frame_tags, 0, abs_sample_cnt, abs_sample_cnt + size, pmt::pmt_string_to_symbol("smartnet_frame"));
+    get_tags_in_range(frame_tags, 0, abs_sample_cnt, abs_sample_cnt + size, pmt::string_to_symbol("smartnet_frame"));
     if(frame_tags.size() == 0) {
 	return 0; //sad trombone
     }
@@ -173,7 +173,7 @@ smartnet_crc::work (int noutput_items,
 	    std::ostringstream payload;
 	    payload.str("");
 	    payload << pkt.address << "," << pkt.groupflag << "," << pkt.command;
-	    gr::message_sptr msg = gr::make_message_from_string(std::string(payload.str()));
+	    gr::message::sptr msg = gr::message::make_from_string(std::string(payload.str()));
 	    d_queue->handle(msg);
 	} else if (VERBOSE) std::cout << "CRC FAILED" << std::endl;
     }

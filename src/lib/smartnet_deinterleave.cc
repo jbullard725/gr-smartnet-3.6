@@ -107,7 +107,7 @@ smartnet_deinterleave::general_work (int noutput_items,
 
     uint64_t outlen = 0; //output sample count
 
-    get_tags_in_range(preamble_tags, 0, abs_sample_cnt, abs_sample_cnt + size, pmt::pmt_string_to_symbol("smartnet_preamble"));
+    get_tags_in_range(preamble_tags, 0, abs_sample_cnt, abs_sample_cnt + size, pmt::string_to_symbol("smartnet_preamble"));
     if(preamble_tags.size() == 0) {
 	consume_each(size);
 	return 0;
@@ -129,7 +129,7 @@ smartnet_deinterleave::general_work (int noutput_items,
 	//tag with the correct output sample number
 	add_item_tag(0, //stream ID
 		     nitems_written(0) + mark, //sample
-		     pmt::pmt_string_to_symbol("smartnet_frame"), //key
+		     pmt::string_to_symbol("smartnet_frame"), //key
 		     pmt::pmt_t() //data (unused here)
 		    );
 	outlen += 76;
